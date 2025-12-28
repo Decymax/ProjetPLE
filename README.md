@@ -12,6 +12,16 @@ hdfs dfs -ls /user/auber/data_ple/clash_royale
 mvn clean compile package
 ```
 
+Pour compiler en local:
+
+```bash
+mvn clean package
+```
+
+```bash
+cd /net/cremi/luautret/espaces/travail/m2/ProgLarge/ProjetPLE/MapReduce/mapreduce_maven && rm -rf output_local && mvn exec:java -Dexec.mainClass="DataCleaning" -Dexec.args="../raw_data_100K.json output_local" 2>&1 | tail -50
+```
+
 # Data Cleaning MapReduce
 
 - Pas de doublons exactes
