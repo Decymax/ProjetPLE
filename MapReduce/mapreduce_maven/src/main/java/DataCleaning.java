@@ -110,8 +110,8 @@ public class DataCleaning {
       }
   }
 
-  // --- MAIN ---
-  public static void main(String[] args) throws Exception {
+  // --- Main Job Runner ---
+  public static boolean runJob(String[] args) throws Exception {
       Configuration conf = new Configuration();
       Job job = Job.getInstance(conf, "PLE Clash Royale - Data Cleaning");
       
@@ -145,6 +145,10 @@ public class DataCleaning {
         System.out.println("-------------------------------------------\n");
       }
       
-      System.exit(success ? 0 : 1);
+      return success;
+  }
+
+  public static void main(String[] args) throws Exception {
+      System.exit(runJob(args) ? 0 : 1);
   }
 }

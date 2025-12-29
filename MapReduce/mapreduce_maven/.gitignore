@@ -1,3 +1,5 @@
 target/
 dependency-reduced-pom.xml
 output_local/
+output_nodes/
+output_clean/

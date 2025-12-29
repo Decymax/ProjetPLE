@@ -1,6 +1,7 @@
 import java.util.List;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Arrays;
 
 public class Game {
     private String date;
@@ -27,6 +28,10 @@ public class Game {
         }
         return true;
     }
+    
+    public int getWinner() { return winner; }
+    
+    public List<Player> getPlayers() { return players; }
 
     /**
      * Génère une clé basée UNIQUEMENT sur les joueurs et le round.

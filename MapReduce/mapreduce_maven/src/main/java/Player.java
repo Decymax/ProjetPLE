@@ -31,4 +31,19 @@ public class Player {
     }
 
     public String getUtag() { return utag; }
+    
+    public String getDeck() { return deck; }
+    
+    /**
+     * Retourne les 8 cartes du deck sous forme de tableau.
+     * Chaque carte est représentée par 2 caractères hexa.
+     */
+    public String[] getCards() {
+        if (deck == null || deck.length() != 16) return null;
+        String[] cards = new String[8];
+        for (int i = 0; i < 8; i++) {
+            cards[i] = deck.substring(i * 2, i * 2 + 2);
+        }
+        return cards;
+    }
 }
