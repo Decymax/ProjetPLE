@@ -1,3 +1,6 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -20,6 +23,10 @@ public class Main {
 
             case "nodes":
                 success = runNodesAndEdges(args);
+                break;
+            
+            case "stats":
+                success = runStats(args);
                 break;
             
             case "all":
@@ -66,6 +73,47 @@ public class Main {
         
         prepareOutput(args[2]);
         return NodesAndEdges.runJob(new String[]{args[1], args[2]}, size);
+    }
+
+    private static boolean runStats(String[] args) throws Exception {
+        if (args.length < 4) {
+            System.err.println("Usage: stats <nodes_file> <edges_file> <output>");
+            return false;
+        }
+        
+        String nodesPath = args[1];
+        String edgesPath = args[2];
+        String outputPath = args[3];
+        
+        // Calculer nAll automatiquement en sommant les counts des edges
+        long nAll = calculateNAll(edgesPath);
+        System.out.println(">>> N_ALL calculé automatiquement : " + nAll);
+        
+        prepareOutput(outputPath);
+        return Stats.runJob(nodesPath, edgesPath, outputPath, nAll);
+    }
+    
+    /**
+     * Calcule N_ALL en sommant les counts de toutes les edges.
+     * Format edge: archetype1;archetype2;count;wins
+     * Chaque partie génère 2 edges (A→B et B→A), donc on divise par 2.
+     */
+    private static long calculateNAll(String edgesPath) throws Exception {
+        Configuration conf = new Configuration();
+        Path path = new Path(edgesPath);
+        FileSystem fs = path.getFileSystem(conf);
+        
+        long total = 0;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(path)))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts.length >= 3) {
+                    total += Long.parseLong(parts[2]); // count est en position 2
+                }
+            }
+        }
+        return total / 2; // Chaque partie = 2 edges
     }
     
     private static boolean runFullPipeline(String[] args) throws Exception {
@@ -126,6 +174,7 @@ public class Main {
         System.out.println("Tâches:");
         System.out.println("  clean <input> <output>              - Nettoyage JSON et doublons");
         System.out.println("  nodes <input> <output> [--size=k]   - Génération Nœuds et Arêtes");
+        System.out.println("  stats <nodes> <edges> <output>      - Stats avec prévisions (nAll auto)");
         System.out.println("  all   <input> <output> [--size=k]   - Pipeline complet (clean + nodes)");
         System.out.println("\nOptions:");
         System.out.println("  --size=k  : Taille des archétypes (1-8, défaut=8 = deck complet)");

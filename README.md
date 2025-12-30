@@ -24,6 +24,7 @@ Exemple d'execution en local:
 ```bash
 java -jar target/clash-royale-0.0.1.jar clean ../raw_data_100k.json ./output_clean/
 java -jar target/clash-royale-0.0.1.jar nodes ./output_clean/part-r-00000 ../output_nodes/ --size=6
+java -jar target/clash-royale-0.0.1.jar stats ./output_nodes/nodes-r-00000 ./output_nodes/edges-r-00000 ./output_stats/
 ```
 
 # Data Cleaning MapReduce
@@ -81,3 +82,15 @@ edges-r-00000 : va renvoyer chaque les matchups entre les decks avec le nombre d
 
 format de sortie des nœuds: archétype;count;wins
 format de sortie des arêtes: archetype1;archetype2;count;wins
+
+### Partie 3
+
+A partir des 2 ensembles de données qu'on vient de calculer, on doit créer un nouveau fichier qui va contenir pour chaque arête (deck1 vs deck2) la prévision de victoire du deck1 contre le deck2. Les données seront sous cette forme:
+
+Archetype source, Archetype target ; count ; win; count source; count target; prevision
+0001;0001;44;19;12051,12051; 39.5
+0001;0006;34;17;12051,7840; 30.5
+0001;0007;42;18;12051,4700; 47
+
+Pour ce faire on va faire une jointure entre les arêtes et les noeuds pour récupérer le count target (le nombre de parties jouées par le deck cible). 
+On doit faire ça en 2 jobs succéssifs, dans le premier on joint les arêtes avec les nœuds pour récupérer le count source (le nombre de parties jouées par le deck source). Dans le second job on joint le résultat du premier job avec les nœuds pour récupérer le count target.

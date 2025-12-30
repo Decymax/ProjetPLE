@@ -22,6 +22,13 @@ import com.google.gson.JsonSyntaxException;
 
 public class DataCleaning {
 
+  // Stocke le nombre de lignes écrites lors du dernier job
+  private static long lastOutputCount = 0;
+
+  public static long getLastOutputCount() {
+    return lastOutputCount;
+  }
+
   public enum DataCounters {
     TOTAL_INPUT, VALID_GAMES, INVALID_JSON, INVALID_DATA, DUPLICATES, OUTPUT_LINES
   }
@@ -134,6 +141,7 @@ public class DataCleaning {
       
       if (success) {
         Counters c = job.getCounters();
+        lastOutputCount = c.findCounter(DataCounters.OUTPUT_LINES).getValue();
         System.out.println("\n-------------------------------------------");
         System.out.println("  RAPPORT DE NETTOYAGE");
         System.out.println("-------------------------------------------");
