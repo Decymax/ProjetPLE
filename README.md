@@ -16,10 +16,14 @@ Pour compiler en local:
 
 ```bash
 mvn clean package
+java -jar target/clash-royale-0.0.1.jar --help
 ```
 
+Exemple d'execution en local:
+
 ```bash
-cd /net/cremi/luautret/espaces/travail/m2/ProgLarge/ProjetPLE/MapReduce/mapreduce_maven && rm -rf output_local && mvn exec:java -Dexec.mainClass="DataCleaning" -Dexec.args="../raw_data_100K.json output_local" 2>&1 | tail -50
+java -jar target/clash-royale-0.0.1.jar clean ../raw_data_100k.json ./output_clean/
+java -jar target/clash-royale-0.0.1.jar nodes ./output_clean/part-r-00000 ../output_nodes/ --size=6
 ```
 
 # Data Cleaning MapReduce
@@ -49,3 +53,31 @@ entre le joueur A et B change. (Partie 1: Joueur A vs joueur B // Partie 1: Joue
 
 On utilise Gson pour valider la structure JSON des lignes reçues. Si une ligne n'est pas conforme on l'ignore.
 
+## Partie 2
+
+On génère les noeuds (archétypes de deck) et les arètes (deck entier) à partir des données nettoyées avant.
+
+Un archétypes est une combinaison de n cartes parmis les 8 du deck. Par défaut on met le deck entier, mais on peut choisir une taille plus petite pour avoir plus de 
+précision sur les combos de cartes jouées.
+
+On trie les cartes avant pour avoir une représentation unique de l'archétype. Ça évite comme le traitement des joueurs avant de comptabiliser les mêmes archétypes en double.
+
+On utilise un Combiner pour réduire le trafic réseau entre le Mapper et le Reducer. Il s'occupe de calculer le nombre d'occurence des archétypes et leur nombre de victoires
+avant d'envoyer les données au Reducer. Ça réduit considérablement le volume de données échangées.
+
+-------------------------------------------
+  MAPPER  → Nœuds émis : 196342
+  MAPPER  → Arêtes     : 196342
+-------------------------------------------
+  COMBINER→ Nœuds émis : 67879
+  COMBINER→ Arêtes     : 178132
+-------------------------------------------
+
+C'est un exemple sur le dataset de 100k lignes nettoyées avec une taille d'archétype de 8 cartes. Par rapport à ce qui sort du mapper on voit que le combiner a réduit le nombre de nœuds émis de 196342 à 67879.
+
+Le reducer va écrire les résultats finaux dans 2 fichiers séparés: un pour les nœuds et un pour les arêtes.
+nodes-r-00000 : va renvoyer chaque archétype avec son nombre d'occurrences et son nombre de victoires.
+edges-r-00000 : va renvoyer chaque les matchups entre les decks avec le nombre de fois qu'ils se sont affrontés et le nombre de victoires du premier deck contre le second.
+
+format de sortie des nœuds: archétype;count;wins
+format de sortie des arêtes: archetype1;archetype2;count;wins
