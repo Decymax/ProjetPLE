@@ -54,7 +54,17 @@ public class Main {
             return false;
         }
         prepareOutput(args[2]);
-        return DataCleaning.runJob(new String[]{args[1], args[2]});
+        
+        long startTime = System.currentTimeMillis();
+        System.out.println(">>> Démarrage du job DataCleaning...");
+        
+        boolean success = DataCleaning.runJob(new String[]{args[1], args[2]});
+        
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+        System.out.println(">>> Job DataCleaning terminé en " + formatDuration(duration));
+        
+        return success;
     }
 
     private static boolean runNodesAndEdges(String[] args) throws Exception {
@@ -72,7 +82,17 @@ public class Main {
         }
         
         prepareOutput(args[2]);
-        return NodesAndEdges.runJob(new String[]{args[1], args[2]}, size);
+        
+        long startTime = System.currentTimeMillis();
+        System.out.println(">>> Démarrage du job NodesAndEdges (size=" + size + ")...");
+        
+        boolean success = NodesAndEdges.runJob(new String[]{args[1], args[2]}, size);
+        
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+        System.out.println(">>> Job NodesAndEdges terminé en " + formatDuration(duration));
+        
+        return success;
     }
 
     private static boolean runStats(String[] args) throws Exception {
@@ -90,7 +110,17 @@ public class Main {
         System.out.println(">>> N_ALL calculé automatiquement : " + nAll);
         
         prepareOutput(outputPath);
-        return Stats.runJob(nodesPath, edgesPath, outputPath, nAll);
+        
+        long startTime = System.currentTimeMillis();
+        System.out.println(">>> Démarrage du job Stats...");
+        
+        boolean success = Stats.runJob(nodesPath, edgesPath, outputPath, nAll);
+        
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+        System.out.println(">>> Job Stats terminé en " + formatDuration(duration));
+        
+        return success;
     }
     
     /**
@@ -122,6 +152,8 @@ public class Main {
             return false;
         }
         
+        long totalStartTime = System.currentTimeMillis();
+        
         // Parser la taille d'archétype
         int size = 8;
         for (int i = 3; i < args.length; i++) {
@@ -136,7 +168,11 @@ public class Main {
 
         System.out.println(">>> ÉTAPE 1 : Nettoyage...");
         prepareOutput(tempCleaned);
+        
+        long step1Start = System.currentTimeMillis();
         boolean cleanSuccess = DataCleaning.runJob(new String[]{inputRaw, tempCleaned});
+        long step1End = System.currentTimeMillis();
+        System.out.println(">>> Étape 1 terminée en " + formatDuration(step1End - step1Start));
 
         if (!cleanSuccess) {
             System.err.println("!!! Échec du nettoyage.");
@@ -145,13 +181,20 @@ public class Main {
 
         System.out.println(">>> ÉTAPE 2 : Génération Nodes & Edges (size=" + size + ")...");
         prepareOutput(outputFinal);
+        
+        long step2Start = System.currentTimeMillis();
         boolean nodesSuccess = NodesAndEdges.runJob(new String[]{tempCleaned, outputFinal}, size);
+        long step2End = System.currentTimeMillis();
+        System.out.println(">>> Étape 2 terminée en " + formatDuration(step2End - step2Start));
 
         if (nodesSuccess) {
              System.out.println(">>> Nettoyage des fichiers temporaires...");
              Configuration conf = new Configuration();
              FileSystem.get(conf).delete(new Path(tempCleaned), true);
         }
+        
+        long totalEndTime = System.currentTimeMillis();
+        System.out.println(">>> Pipeline complet terminé en " + formatDuration(totalEndTime - totalStartTime));
 
         return nodesSuccess;
     }
@@ -166,6 +209,25 @@ public class Main {
         }
     }
 
+    /**
+     * Formate une durée en millisecondes en format lisible.
+     */
+    private static String formatDuration(long durationMs) {
+        long seconds = durationMs / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        
+        if (hours > 0) {
+            return String.format("%dh %dm %ds (%d ms)", hours, minutes % 60, seconds % 60, durationMs);
+        } else if (minutes > 0) {
+            return String.format("%dm %ds (%d ms)", minutes, seconds % 60, durationMs);
+        } else if (seconds > 0) {
+            return String.format("%ds (%d ms)", seconds, durationMs);
+        } else {
+            return durationMs + " ms";
+        }
+    }
+    
     private static void printUsage() {
         System.out.println("\n===========================================");
         System.out.println("  Projet MapReduce - Clash Royale");

@@ -22,9 +22,45 @@ java -jar target/clash-royale-0.0.1.jar --help
 Exemple d'execution en local:
 
 ```bash
-java -jar target/clash-royale-0.0.1.jar clean ../raw_data_100k.json ./output_clean/
+java -jar target/clash-royale-0.0.1.jar clean ../raw_data_100K.json ./output_clean/
 java -jar target/clash-royale-0.0.1.jar nodes ./output_clean/part-r-00000 ../output_nodes/ --size=6
 java -jar target/clash-royale-0.0.1.jar stats ./output_nodes/nodes-r-00000 ./output_nodes/edges-r-00000 ./output_stats/
+```
+
+Pour envoyer le fichier jar sur la gateway:
+
+```bash
+scp target/clash-royale-0.0.1.jar lsd:[nom_du_fichier_sur_gateway].jar
+```
+
+Pour exécuter sur le cluster Hadoop:
+
+```bash
+hadoop jar [nom_du_fichier_sur_gateway].jar clean /user/auber/data_ple/clash_royale/raw_data_100K.json clash-royale/output_clean/
+hadoop jar [nom_du_fichier_sur_gateway].jar nodes clash-royale/output_clean/part-r-00000 clash-royale/output_nodes/ --size=6
+hadoop jar [nom_du_fichier_sur_gateway].jar stats clash-royale/output_nodes/nodes-r-00000 clash-royale/output_nodes/edges-r-00000 clash-royale/output_stats/
+```
+
+Pour récupérer les résultats:
+
+```bash
+hdfs dfs -get clash-royale/output_* ./resultats/
+hdfs dfs -rm -r clash-royale/output_*
+```
+
+Pour transférer de la gateway vers la machine locale:
+
+(sur la machine locale)
+
+```bash
+scp -r lsd:resultats/ ./resultats/
+```
+
+Pour nettoyer la gateway:
+
+```bash
+cd ~/resultats/
+rm -r output_*
 ```
 
 # Data Cleaning MapReduce
