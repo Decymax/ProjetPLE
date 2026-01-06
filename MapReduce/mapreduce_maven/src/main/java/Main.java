@@ -107,7 +107,6 @@ public class Main {
         
         // Calculer nAll automatiquement en sommant les counts des edges
         long nAll = calculateNAll(edgesPath);
-        System.out.println(">>> N_ALL calculé automatiquement : " + nAll);
         
         prepareOutput(outputPath);
         
@@ -143,7 +142,7 @@ public class Main {
                 }
             }
         }
-        return total / 2; // Chaque partie = 2 edges
+        return total; // Chaque partie = 2 edges
     }
     
     private static boolean runFullPipeline(String[] args) throws Exception {
