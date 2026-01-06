@@ -30,15 +30,15 @@ java -jar target/clash-royale-0.0.1.jar stats ./output_nodes/nodes-r-00000 ./out
 Pour envoyer le fichier jar sur la gateway:
 
 ```bash
-scp target/clash-royale-0.0.1.jar lsd:[nom_du_fichier_sur_gateway].jar
+scp target/clash-royale-0.0.1.jar lsd:clash-royale-0.0.1.jar
 ```
 
 Pour exécuter sur le cluster Hadoop:
 
 ```bash
-hadoop jar [nom_du_fichier_sur_gateway].jar clean /user/auber/data_ple/clash_royale/raw_data_100K.json clash-royale/output_clean/
-hadoop jar [nom_du_fichier_sur_gateway].jar nodes clash-royale/output_clean/part-r-00000 clash-royale/output_nodes/ --size=6
-hadoop jar [nom_du_fichier_sur_gateway].jar stats clash-royale/output_nodes/nodes-r-00000 clash-royale/output_nodes/edges-r-00000 clash-royale/output_stats/
+hadoop jar clash-royale-0.0.1.jar clean /user/auber/data_ple/clash_royale/raw_data_100K.json clash-royale/output_clean/
+hadoop jar clash-royale-0.0.1.jar nodes clash-royale/output_clean/part-r-00000 clash-royale/output_nodes/ --size=6
+hadoop jar clash-royale-0.0.1.jar stats clash-royale/output_nodes/nodes-r-00000 clash-royale/output_nodes/edges-r-00000 clash-royale/output_stats/
 ```
 
 Pour récupérer les résultats:
