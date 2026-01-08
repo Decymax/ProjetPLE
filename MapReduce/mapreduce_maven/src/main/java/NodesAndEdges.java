@@ -21,7 +21,7 @@ import com.google.gson.Gson;
 /**
  * Job MapReduce pour générer les nœuds (archétypes) et arêtes (matchups).
  * 
- * Supporte les archétypes de taille k (1 à 8 cartes).
+ * Supporte les archétypes de taille k (1/8 voir 2 sur le fichier de taille 100k, au delà c'est mort).
  * Utilise un Combiner pour réduire le trafic réseau.
  * Utilise MultipleOutputs pour écrire dans 2 fichiers (nodes/edges).
  */
@@ -30,6 +30,7 @@ public class NodesAndEdges {
     public static final String ARCHETYPE_SIZE_KEY = "archetype.size";
     public static final int DEFAULT_ARCHETYPE_SIZE = 8;
 
+    // --- COMPTEURS PERSONNALISÉS ---
     public enum Counters {
         GAMES_PROCESSED, INVALID_GAMES,
         // Mapper
@@ -72,6 +73,7 @@ public class NodesAndEdges {
             Player p1 = game.getPlayers().get(1);
             int winner = game.getWinner(); // 0 = joueur 0 gagne, 1 = joueur 1 gagne
 
+            // recupérer les cartes des joueurs
             String[] cards0 = p0.getCards();
             String[] cards1 = p1.getCards();
 
@@ -150,6 +152,9 @@ public class NodesAndEdges {
 
     // --- COMBINER ---
     public static class ArchetypeCombiner extends Reducer<Text, Text, Text, Text> {
+        /* Permet de sommer les counts et wins pour chaque clé intermédiaire
+        * Cela réduit le trafic réseau entre le Mapper et le Reducer final.
+        */
         @Override
         public void reduce(Text key, Iterable<Text> values, Context context) 
                 throws IOException, InterruptedException {
@@ -178,6 +183,9 @@ public class NodesAndEdges {
     public static class ArchetypeReducer extends Reducer<Text, Text, Text, Text> {
         private MultipleOutputs<Text, Text> multipleOutputs;
 
+        /**
+         * Initialise MultipleOutputs pour écrire dans plusieurs fichiers de sortie.
+         */
         @Override
         protected void setup(Context context) {
             multipleOutputs = new MultipleOutputs<>(context);
@@ -197,6 +205,7 @@ public class NodesAndEdges {
 
             String keyStr = key.toString();
             
+            // "N" -> on écrit dans le fichier des nœuds
             if (keyStr.startsWith("N|")) {
                 String archetype = keyStr.substring(2);
                 // archetype;count;wins
@@ -204,7 +213,9 @@ public class NodesAndEdges {
                 multipleOutputs.write("nodes", new Text(output), new Text(""));
                 context.getCounter(Counters.REDUCER_NODES_WRITTEN).increment(1);
                 
-            } else if (keyStr.startsWith("E|")) {
+            } 
+            // "E" -> on écrit dans le fichier des arêtes
+            else if (keyStr.startsWith("E|")) {
                 String[] parts = keyStr.substring(2).split("\\|");
                 String source = parts[0];
                 String target = parts[1];

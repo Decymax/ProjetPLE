@@ -22,13 +22,13 @@ import com.google.gson.JsonSyntaxException;
 
 public class DataCleaning {
 
-  // Stocke le nombre de lignes écrites lors du dernier job
   private static long lastOutputCount = 0;
 
   public static long getLastOutputCount() {
     return lastOutputCount;
   }
 
+  // --- COMPTEURS PERSONNALISÉS ---
   public enum DataCounters {
     TOTAL_INPUT, VALID_GAMES, INVALID_JSON, INVALID_DATA, DUPLICATES, OUTPUT_LINES
   }
@@ -42,6 +42,7 @@ public class DataCleaning {
       String line = value.toString();
       Game game;
 
+      // conversion JSON -> Objet Game (permet de faciliter la validation)
       try {
         game = gson.fromJson(line, Game.class);
       } catch (JsonSyntaxException e) {

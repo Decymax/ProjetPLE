@@ -7,6 +7,14 @@ import org.apache.hadoop.fs.Path;
 
 public class Main {
 
+    /**
+     * Point d'entrée principal.
+     * Arguments:
+     *   clean <input> <output>
+     *   nodes <input_cleaned> <output> [--size=k]
+     *   stats <nodes_file> <edges_file> <output>
+     *   all <input_raw> <output_final> [--size=k]
+     */
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             printUsage();
@@ -28,10 +36,6 @@ public class Main {
             case "stats":
                 success = runStats(args);
                 break;
-            
-            case "all":
-                success = runFullPipeline(args);
-                break;
 
             case "help":
             case "-h":
@@ -48,6 +52,9 @@ public class Main {
         System.exit(success ? 0 : 1);
     }
 
+    /**
+     * Exécute le job de nettoyage des données.
+     */
     private static boolean runDataCleaning(String[] args) throws Exception {
         if (args.length < 3) {
             System.err.println("Usage: clean <input> <output>");
@@ -67,13 +74,16 @@ public class Main {
         return success;
     }
 
+    /**
+     * Exécute le job de génération des nœuds et arêtes.
+     */
     private static boolean runNodesAndEdges(String[] args) throws Exception {
         if (args.length < 3) {
             System.err.println("Usage: nodes <input_cleaned> <output> [--size=8]");
             return false;
         }
         
-        // Parser la taille d'archétype (optionnel)
+        // Parser la taille d'archétype (optionnel, 8 par défaut)
         int size = 8;
         for (int i = 3; i < args.length; i++) {
             if (args[i].startsWith("--size=")) {
@@ -95,6 +105,11 @@ public class Main {
         return success;
     }
 
+    /**
+     * Exécute le job de calcul des statistiques avec prévisions.
+     * Calcule automatiquement N_ALL en sommant les counts des edges.
+     * nécessite d'avoir généré les nœuds et arêtes au préalable (logique)
+     */
     private static boolean runStats(String[] args) throws Exception {
         if (args.length < 4) {
             System.err.println("Usage: stats <nodes_file> <edges_file> <output>");
@@ -125,7 +140,7 @@ public class Main {
     /**
      * Calcule N_ALL en sommant les counts de toutes les edges.
      * Format edge: archetype1;archetype2;count;wins
-     * Chaque partie génère 2 edges (A→B et B→A), donc on divise par 2.
+     * Chaque partie génère 2 edges (A→B et B→A).
      */
     private static long calculateNAll(String edgesPath) throws Exception {
         Configuration conf = new Configuration();
@@ -138,66 +153,17 @@ public class Main {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
                 if (parts.length >= 3) {
-                    total += Long.parseLong(parts[2]); // count est en position 2
+                    total += Long.parseLong(parts[2]);
                 }
             }
         }
-        return total; // Chaque partie = 2 edges
-    }
-    
-    private static boolean runFullPipeline(String[] args) throws Exception {
-        if (args.length < 3) {
-            System.err.println("Usage: all <input_raw> <output_final> [--size=8]");
-            return false;
-        }
-        
-        long totalStartTime = System.currentTimeMillis();
-        
-        // Parser la taille d'archétype
-        int size = 8;
-        for (int i = 3; i < args.length; i++) {
-            if (args[i].startsWith("--size=")) {
-                size = Integer.parseInt(args[i].substring(7));
-            }
-        }
-        
-        String inputRaw = args[1];
-        String outputFinal = args[2];
-        String tempCleaned = outputFinal + "_temp_cleaned";
-
-        System.out.println(">>> ÉTAPE 1 : Nettoyage...");
-        prepareOutput(tempCleaned);
-        
-        long step1Start = System.currentTimeMillis();
-        boolean cleanSuccess = DataCleaning.runJob(new String[]{inputRaw, tempCleaned});
-        long step1End = System.currentTimeMillis();
-        System.out.println(">>> Étape 1 terminée en " + formatDuration(step1End - step1Start));
-
-        if (!cleanSuccess) {
-            System.err.println("!!! Échec du nettoyage.");
-            return false;
-        }
-
-        System.out.println(">>> ÉTAPE 2 : Génération Nodes & Edges (size=" + size + ")...");
-        prepareOutput(outputFinal);
-        
-        long step2Start = System.currentTimeMillis();
-        boolean nodesSuccess = NodesAndEdges.runJob(new String[]{tempCleaned, outputFinal}, size);
-        long step2End = System.currentTimeMillis();
-        System.out.println(">>> Étape 2 terminée en " + formatDuration(step2End - step2Start));
-
-        if (nodesSuccess) {
-             System.out.println(">>> Nettoyage des fichiers temporaires...");
-             Configuration conf = new Configuration();
-             FileSystem.get(conf).delete(new Path(tempCleaned), true);
-        }
-        
-        long totalEndTime = System.currentTimeMillis();
-        System.out.println(">>> Pipeline complet terminé en " + formatDuration(totalEndTime - totalStartTime));
-
-        return nodesSuccess;
+        return total;
     }
 
+    /**
+     * Prépare le dossier de sortie en le supprimant s'il existe déjà.
+     * évite les erreurs Hadoop liées à l'existence préalable du dossier.
+     */
     private static void prepareOutput(String pathStr) throws Exception {
         Configuration conf = new Configuration();
         Path path = new Path(pathStr);

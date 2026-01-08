@@ -63,6 +63,12 @@ cd ~/resultats/
 rm -r output_*
 ```
 
+Pour récupérer le graphique du matchmaking (Dans ProjetPLE/MapReduce):
+
+```bash
+python plot_matchmaking.py
+```
+
 # Data Cleaning MapReduce
 
 - Pas de doublons exactes
