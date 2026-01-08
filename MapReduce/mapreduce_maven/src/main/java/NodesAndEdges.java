@@ -84,10 +84,6 @@ public class NodesAndEdges {
             Arrays.sort(cards0);
             Arrays.sort(cards1);
 
-            // Générer l'archétype complet (8 cartes)
-            String fullArchetype0 = String.join("", cards0);
-            String fullArchetype1 = String.join("", cards1);
-
             // Générer tous les archétypes de taille k (pour les nœuds ET les arêtes)
             List<String> archetypes0 = generateArchetypes(cards0, archetypeSize);
             List<String> archetypes1 = generateArchetypes(cards1, archetypeSize);
@@ -108,9 +104,14 @@ public class NodesAndEdges {
 
             // --- ÉMETTRE LES ARÊTES ---
             // Émettre une arête pour chaque paire d'archétypes (arch0, arch1)
-            context.write(new Text("E|" + fullArchetype0 + "|" + fullArchetype1), 
-                          new Text("1," + win0));
-            context.getCounter(Counters.MAPPER_EDGES_EMITTED).increment(1);
+            for (String arch0 : archetypes0) {
+                for (String arch1 : archetypes1) {
+                    // Format: "E|source|target" -> "count,wins"
+                    String edgeKey = "E|" + arch0 + "|" + arch1;
+                    context.write(new Text(edgeKey), new Text("1," + win0));
+                    context.getCounter(Counters.MAPPER_EDGES_EMITTED).increment(1);
+                }
+            }
         }
 
         /**
