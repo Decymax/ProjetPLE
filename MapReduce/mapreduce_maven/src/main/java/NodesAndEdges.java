@@ -89,12 +89,15 @@ public class NodesAndEdges {
             }
 
             // --- ÉMETTRE LES ARÊTES ---
-            // Émettre une arête pour chaque paire d'archétypes (arch0, arch1)
+            // Émettre les 2 arêtes pour chaque paire d'archétypes (arch0 → arch1 et arch1 → arch0)
             for (String arch0 : archetypes0) {
                 for (String arch1 : archetypes1) {
-                    // Format: "E|source|target" -> "count,wins"
-                    String edgeKey = "E|" + arch0 + "|" + arch1;
-                    context.write(new Text(edgeKey), new Text("1," + win0));
+                    // Arête arch0 → arch1 (victoire du joueur 0)
+                    context.write(new Text("E|" + arch0 + "|" + arch1), new Text("1," + win0));
+                    context.getCounter(Counters.MAPPER_EDGES_EMITTED).increment(1);
+                    
+                    // Arête arch1 → arch0 (victoire du joueur 1)
+                    context.write(new Text("E|" + arch1 + "|" + arch0), new Text("1," + win1));
                     context.getCounter(Counters.MAPPER_EDGES_EMITTED).increment(1);
                 }
             }

@@ -22,9 +22,9 @@ java -jar target/clash-royale-0.0.1.jar --help
 Exemple d'execution en local:
 
 ```bash
-java -jar target/clash-royale-0.0.1.jar clean ../raw_data_100K.json ./output_clean/
-java -jar target/clash-royale-0.0.1.jar nodes ./output_clean/part-r-00000 ./output_nodes/ --size=6
-java -jar target/clash-royale-0.0.1.jar stats ./output_nodes/nodes-r-00000 ./output_nodes/edges-r-00000 ./output_stats/
+java -jar target/clash-royale-0.0.1.jar clean ../raw_data_100K.json ../result_hdfs/output_clean/
+java -jar target/clash-royale-0.0.1.jar nodes ../result_hdfs/output_clean/part-r-00000 ../result_hdfs/output_nodes/ --size=6
+java -jar target/clash-royale-0.0.1.jar stats ../result_hdfs/output_nodes/nodes-r-00000 ../result_hdfs/output_nodes/edges-r-00000 ../result_hdfs/output_stats/
 ```
 
 Pour envoyer le fichier jar sur la gateway:
