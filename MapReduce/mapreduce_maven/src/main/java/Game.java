@@ -17,11 +17,13 @@ public class Game {
 
     /**
      * Vérifie si les données du jeu sont valides.
+     * Filtre uniquement les parties PathOfLegend.
      */
     public boolean isValid() {
         if (date == null || date.isEmpty()) return false;
         if (game == null || game.isEmpty()) return false;
         if (players == null || players.size() != 2) return false;
+        if (!"pathOfLegend".equals(type)) return false;
 
         for (Player player : players) {
             if (!player.isValid()) return false;
