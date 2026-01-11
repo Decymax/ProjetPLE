@@ -32,7 +32,7 @@ public class NodesAndEdges {
 
     // --- COMPTEURS PERSONNALISÉS ---
     public enum Counters {
-        GAMES_PROCESSED, INVALID_GAMES,
+        GAMES_PROCESSED,
         // Mapper
         MAPPER_NODES_EMITTED, MAPPER_EDGES_EMITTED,
         // Combiner
@@ -54,19 +54,8 @@ public class NodesAndEdges {
 
         @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            Game game;
-            try {
-                game = gson.fromJson(value.toString(), Game.class);
-            } catch (Exception e) {
-                context.getCounter(Counters.INVALID_GAMES).increment(1);
-                return;
-            }
-
-            if (game == null || game.getPlayers() == null || game.getPlayers().size() != 2) {
-                context.getCounter(Counters.INVALID_GAMES).increment(1);
-                return;
-            }
-
+            // Les données sont déjà validées par DataCleaning
+            Game game = gson.fromJson(value.toString(), Game.class);
             context.getCounter(Counters.GAMES_PROCESSED).increment(1);
 
             Player p0 = game.getPlayers().get(0);
@@ -76,11 +65,6 @@ public class NodesAndEdges {
             // recupérer les cartes des joueurs
             String[] cards0 = p0.getCards();
             String[] cards1 = p1.getCards();
-
-            if (cards0 == null || cards1 == null) {
-                context.getCounter(Counters.INVALID_GAMES).increment(1);
-                return;
-            }
 
             // Trier les cartes pour avoir une représentation canonique
             Arrays.sort(cards0);
@@ -279,7 +263,6 @@ public class NodesAndEdges {
             System.out.println("-------------------------------------------");
             System.out.println("  Taille archétype    : " + archetypeSize);
             System.out.println("  Parties traitées    : " + c.findCounter(Counters.GAMES_PROCESSED).getValue());
-            System.out.println("  Parties invalides   : " + c.findCounter(Counters.INVALID_GAMES).getValue());
             System.out.println("-------------------------------------------");
             System.out.println("  MAPPER  → Nœuds émis : " + mapperNodes);
             System.out.println("  MAPPER  → Arêtes     : " + mapperEdges);
