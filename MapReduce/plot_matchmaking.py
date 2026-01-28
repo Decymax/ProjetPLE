@@ -5,7 +5,6 @@ from scipy import stats
 import os
 import sys
 
-# Ton fichier d'entrée (Assure-toi que le chemin est bon)
 FILE_NAME = "result_hdfs/output_stats/part-r-00000"
 OUTPUT_IMG = "tableau_de_bord_matchmaking.png"
 
@@ -14,14 +13,12 @@ def analyser_resultats():
     print("   ANALYSE AVANCÉE MATCHMAKING CLASH ROYALE")
     print("==========================================")
 
-    # 1. Chargement des données
     if not os.path.exists(FILE_NAME):
         print(f"ERREUR : Le fichier '{FILE_NAME}' est introuvable.")
         return
 
     print(f">>> Chargement de '{FILE_NAME}'...")
     try:
-        # On définit les noms de colonnes explicitement
         df = pd.read_csv(FILE_NAME, sep=";", header=None, 
                          names=["Source", "Target", "CountObs", "Win", 
                                 "CountSource", "CountTarget", "Prevision"])
@@ -29,9 +26,6 @@ def analyser_resultats():
         print(f"ERREUR lors de la lecture du CSV : {e}")
         return
 
-    # 2. Nettoyage
-    # CORRECTION : On ne filtre plus à 0.01. On garde TOUT ce qui est > 0.
-    # On évite juste le 0 absolu pour ne pas diviser par zéro dans l'erreur relative.
     df_clean = df[df['Prevision'] > 1e-9].copy()
     
     useful_lines = len(df_clean)
@@ -41,7 +35,6 @@ def analyser_resultats():
         print("\nERREUR : Pas assez de données pour les stats avancées.")
         return
 
-    # 3. Calculs Statistiques
     x = df_clean['Prevision']  # Théorique
     y = df_clean['CountObs']   # Réel
 
@@ -62,17 +55,13 @@ def analyser_resultats():
     print(f" - Pente (Slope) : {slope:.4f} (Idéal: 1.0)")
     print(f" - R²            : {r_squared:.4f}")
     
-    # 4. Génération de la planche de 4 graphiques
     print(f"\n>>> Génération du tableau de bord '{OUTPUT_IMG}'...")
     
-    # Création d'une figure avec 2 lignes et 2 colonnes
     fig, axs = plt.subplots(2, 2, figsize=(16, 12))
     fig.suptitle(f'Analyse Complète du Matchmaking Clash Royale\nPente: {slope:.3f} | R²: {r_squared:.3f}', fontsize=16)
 
-    # --- GRAPH 1 : LINÉAIRE (Classique) ---
+    # --- GRAPH 1 : LINÉAIRE ---
     ax1 = axs[0, 0]
-    # CORRECTION VISUELLE : Points plus petits (s=2) et transparents (alpha=0.2)
-    # Cela permet de voir la densité réelle et le "bruit" autour de la ligne
     ax1.scatter(x, y, alpha=0.2, s=2, color='blue', label='Paires')
     
     max_val = max(x.max(), y.max())
@@ -85,9 +74,8 @@ def analyser_resultats():
     ax1.legend()
     ax1.grid(True, linestyle='--', alpha=0.6)
 
-    # --- GRAPH 2 : LOG-LOG (Pour les petites valeurs) ---
+    # --- GRAPH 2 : LOG-LOG ---
     ax2 = axs[0, 1]
-    # CORRECTION VISUELLE : Idem, on affine les points
     ax2.scatter(x, y, alpha=0.2, s=2, color='purple')
     
     ax2.plot([0.1, max_val], [0.1, max_val], 'r--', linewidth=2, label='Idéal (y=x)')
@@ -98,14 +86,12 @@ def analyser_resultats():
     ax2.set_ylabel("Observé (Log)")
     ax2.grid(True, which="both", linestyle='--', alpha=0.6)
 
-    # --- GRAPH 3 : DISTRIBUTION DES RÉSIDUS (Preuve de l'aléatoire) ---
-    # On filtre les valeurs extrêmes pour le dessin (entre -4 et +4 sigma)
+    # --- GRAPH 3 : DISTRIBUTION DES RÉSIDUS ---
     z_filtered = df_clean["Z_Score"][df_clean["Z_Score"].between(-4, 4)]
     
     ax3 = axs[1, 0]
     ax3.hist(z_filtered, bins=50, color='orange', edgecolor='black', alpha=0.7, density=True)
     
-    # Tracer la courbe de Gauss théorique par dessus
     xmin, xmax = ax3.get_xlim()
     lin_x = np.linspace(xmin, xmax, 100)
     p = stats.norm.pdf(lin_x, 0, 1)
@@ -118,11 +104,10 @@ def analyser_resultats():
 
     # --- GRAPH 4 : ERREUR RELATIVE vs POPULARITÉ ---
     ax4 = axs[1, 1]
-    # CORRECTION VISUELLE : Idem, on affine les points
     ax4.scatter(x, df_clean["RelativeError"], alpha=0.2, s=2, color='teal')
     
     ax4.axhline(0, color='red', linestyle='--', linewidth=2)
-    ax4.set_ylim(-1, 1) # On limite à +/- 100% pour la lisibilité
+    ax4.set_ylim(-1, 1)
     ax4.set_title("4. Biais en fonction de la popularité")
     ax4.set_xlabel("Popularité du Matchup (Théorique)")
     ax4.set_ylabel("Erreur Relative")

@@ -118,7 +118,6 @@ public class Stats {
                     long combinations = nCr(8, k); 
                     
                     double correctionFactor = (double) combinations * combinations;
-                    // -------------------------------
 
                     for (String edge : edges) {
                         String[] parts = edge.split(";");
