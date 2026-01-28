@@ -50,7 +50,7 @@ public class Game {
         String minTag = (tag1.compareTo(tag2) < 0) ? tag1 : tag2;
         String maxTag = (tag1.compareTo(tag2) < 0) ? tag2 : tag1;
         
-        return minTag + "|" + maxTag + "|" + round;
+        return minTag + "|" + maxTag + "|";
     }
 
     /**

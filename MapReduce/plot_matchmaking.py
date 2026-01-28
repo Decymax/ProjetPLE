@@ -5,7 +5,7 @@ from scipy import stats
 import os
 import sys
 
-# Ton fichier d'entrée
+# Ton fichier d'entrée (Assure-toi que le chemin est bon)
 FILE_NAME = "result_hdfs/output_stats/part-r-00000"
 OUTPUT_IMG = "tableau_de_bord_matchmaking.png"
 
@@ -30,8 +30,9 @@ def analyser_resultats():
         return
 
     # 2. Nettoyage
-    # On garde les prévisions > 0.01 pour éviter les divisions par zéro et le bruit
-    df_clean = df[df['Prevision'] > 0.01].copy()
+    # CORRECTION : On ne filtre plus à 0.01. On garde TOUT ce qui est > 0.
+    # On évite juste le 0 absolu pour ne pas diviser par zéro dans l'erreur relative.
+    df_clean = df[df['Prevision'] > 1e-9].copy()
     
     useful_lines = len(df_clean)
     print(f" - Lignes exploitables : {useful_lines}")
@@ -70,10 +71,14 @@ def analyser_resultats():
 
     # --- GRAPH 1 : LINÉAIRE (Classique) ---
     ax1 = axs[0, 0]
-    ax1.scatter(x, y, alpha=0.4, s=10, color='blue', label='Paires')
+    # CORRECTION VISUELLE : Points plus petits (s=2) et transparents (alpha=0.2)
+    # Cela permet de voir la densité réelle et le "bruit" autour de la ligne
+    ax1.scatter(x, y, alpha=0.2, s=2, color='blue', label='Paires')
+    
     max_val = max(x.max(), y.max())
     ax1.plot([0, max_val], [0, max_val], 'r--', linewidth=2, label='Idéal (y=x)')
     ax1.plot(x, slope*x + intercept, 'g-', linewidth=2, label=f'Réalité (Pente={slope:.2f})')
+    
     ax1.set_title("1. Corrélation Linéaire (Vue d'ensemble)")
     ax1.set_xlabel("Théorique")
     ax1.set_ylabel("Observé")
@@ -82,7 +87,9 @@ def analyser_resultats():
 
     # --- GRAPH 2 : LOG-LOG (Pour les petites valeurs) ---
     ax2 = axs[0, 1]
-    ax2.scatter(x, y, alpha=0.4, s=10, color='purple')
+    # CORRECTION VISUELLE : Idem, on affine les points
+    ax2.scatter(x, y, alpha=0.2, s=2, color='purple')
+    
     ax2.plot([0.1, max_val], [0.1, max_val], 'r--', linewidth=2, label='Idéal (y=x)')
     ax2.set_xscale('log')
     ax2.set_yscale('log')
@@ -111,10 +118,11 @@ def analyser_resultats():
 
     # --- GRAPH 4 : ERREUR RELATIVE vs POPULARITÉ ---
     ax4 = axs[1, 1]
-    # On limite l'affichage à +/- 100% d'erreur pour la lisibilité
-    ax4.scatter(x, df_clean["RelativeError"], alpha=0.3, s=10, color='teal')
+    # CORRECTION VISUELLE : Idem, on affine les points
+    ax4.scatter(x, df_clean["RelativeError"], alpha=0.2, s=2, color='teal')
+    
     ax4.axhline(0, color='red', linestyle='--', linewidth=2)
-    ax4.set_ylim(-1, 1) 
+    ax4.set_ylim(-1, 1) # On limite à +/- 100% pour la lisibilité
     ax4.set_title("4. Biais en fonction de la popularité")
     ax4.set_xlabel("Popularité du Matchup (Théorique)")
     ax4.set_ylabel("Erreur Relative")
