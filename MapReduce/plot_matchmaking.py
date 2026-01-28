@@ -5,7 +5,7 @@ from scipy import stats
 import os
 import sys
 
-FILE_NAME = "result_hdfs/output_stats/part-r-00000"
+FILE_NAME = "result_hdfs/stats/part-r-00000"
 OUTPUT_IMG = "tableau_de_bord_matchmaking.png"
 
 def analyser_resultats():
